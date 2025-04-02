@@ -29,6 +29,19 @@ export default defineComponent({
       router.push('/reservations/new');
     };
     
+    const navigateToCreateWithDate = (date) => {
+      // 日付を YYYY-MM-DD 形式に変換
+      const formattedDate = format(date, 'yyyy-MM-dd');
+      router.push(`/reservations/new?date=${formattedDate}`);
+    };
+    
+    const navigateToCreateWithDateTime = (date, hour) => {
+      // 日付と時間を YYYY-MM-DD と HH:00 形式に変換
+      const formattedDate = format(date, 'yyyy-MM-dd');
+      const formattedTime = `${hour.toString().padStart(2, '0')}:00`;
+      router.push(`/reservations/new?date=${formattedDate}&time=${formattedTime}`);
+    };
+    
     const formatDate = (dateStr) => {
       try {
         return format(new Date(dateStr), 'yyyy/MM/dd');
@@ -194,11 +207,13 @@ export default defineComponent({
                 return (
                   <div 
                     class={`calendar-day ${dayReservations.length > 0 ? 'has-reservations' : ''}`}
+                    onClick={() => navigateToCreateWithDate(day)}
                     style={{ 
                       minHeight: '100px',
                       border: '1px solid #ddd',
                       padding: '5px',
-                      backgroundColor: dayReservations.length > 0 ? '#e6f7ff' : 'white'
+                      backgroundColor: dayReservations.length > 0 ? '#e6f7ff' : 'white',
+                      cursor: 'pointer'
                     }}
                   >
                     <div class="day-number" style={{ fontWeight: 'bold' }}>{getDate(day)}</div>
@@ -207,7 +222,10 @@ export default defineComponent({
                         {dayReservations.map(reservation => (
                           <div 
                             class="reservation-chip"
-                            onClick={() => navigateToDetail(reservation.id)}
+                            onClick={(e) => {
+                              e.stopPropagation(); // 親要素のクリックイベントを阻止
+                              navigateToDetail(reservation.id);
+                            }}
                             style={{ 
                               backgroundColor: '#1890ff',
                               color: 'white',
@@ -283,16 +301,23 @@ export default defineComponent({
                   {getDaysInWeek().map((day, dayIndex) => {
                     const timeSlotReservations = getReservationsForTimeSlot(day, hour);
                     return (
-                      <div style={{ 
-                        minHeight: '60px',
-                        borderTop: '1px solid #ddd',
-                        borderLeft: '1px solid #ddd',
-                        padding: '5px',
-                        backgroundColor: timeSlotReservations.length > 0 ? '#e6f7ff' : 'white'
-                      }}>
+                      <div 
+                        onClick={() => navigateToCreateWithDateTime(day, hour)}
+                        style={{ 
+                          minHeight: '60px',
+                          borderTop: '1px solid #ddd',
+                          borderLeft: '1px solid #ddd',
+                          padding: '5px',
+                          backgroundColor: timeSlotReservations.length > 0 ? '#e6f7ff' : 'white',
+                          cursor: 'pointer'
+                        }}
+                      >
                         {timeSlotReservations.map(reservation => (
                           <div 
-                            onClick={() => navigateToDetail(reservation.id)}
+                            onClick={(e) => {
+                              e.stopPropagation(); // 親要素のクリックイベントを阻止
+                              navigateToDetail(reservation.id);
+                            }}
                             style={{ 
                               backgroundColor: '#1890ff',
                               color: 'white',
