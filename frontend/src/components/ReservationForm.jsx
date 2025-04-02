@@ -53,6 +53,8 @@ export default defineComponent({
     });
     
     const validateForm = () => {
+
+      console.log('test');
       const newErrors = {};
       
       if (!form.value.title.trim()) {
@@ -79,15 +81,30 @@ export default defineComponent({
         newErrors.roomNumber = '会議室番号は必須です';
       }
       
+      if (!form.value.attendees.trim()) {
+        newErrors.attendees = '参加者は必須です';
+      }
+      
+      if (!form.value.description.trim()) {
+        newErrors.description = '説明は必須です';
+      }
+      
       errors.value = newErrors;
       return Object.keys(newErrors).length === 0;
     };
     
     const submitForm = () => {
-      if (validateForm()) {
+      // validateFormを実行して、その結果を変数に保存
+      const isValid = validateForm();
+
+      console.log(isValid);
+      
+      // バリデーション成功時のみsubmit処理を実行
+      if (isValid) {
         emit('submit', { ...form.value });
         router.push('/reservations/new');
       }
+      // バリデーション失敗時は何もせず、エラーメッセージが表示されたままになる
     };
     
     const cancelForm = () => {
@@ -95,11 +112,13 @@ export default defineComponent({
     };
     
     const isFormValid = computed(() => {
-      return form.value.title && 
+      return form.value.title.trim() && 
              form.value.date && 
              form.value.startTime && 
              form.value.endTime && 
-             form.value.roomNumber;
+             form.value.roomNumber &&
+             form.value.attendees.trim() &&
+             form.value.description.trim();
     });
     
     return () => (
@@ -114,7 +133,6 @@ export default defineComponent({
               type="text"
               class="form-control"
               placeholder="会議のタイトルを入力"
-              required
             />
             {errors.value.title && <div class="error-text">{errors.value.title}</div>}
           </div>
@@ -126,7 +144,6 @@ export default defineComponent({
               v-model={form.value.date}
               type="date"
               class="form-control"
-              required
             />
             {errors.value.date && <div class="error-text">{errors.value.date}</div>}
           </div>
@@ -139,7 +156,6 @@ export default defineComponent({
                 v-model={form.value.startTime}
                 type="time"
                 class="form-control"
-                required
               />
               {errors.value.startTime && <div class="error-text">{errors.value.startTime}</div>}
             </div>
@@ -151,7 +167,6 @@ export default defineComponent({
                 v-model={form.value.endTime}
                 type="time"
                 class="form-control"
-                required
               />
               {errors.value.endTime && <div class="error-text">{errors.value.endTime}</div>}
             </div>
@@ -165,7 +180,6 @@ export default defineComponent({
               type="text"
               class="form-control"
               placeholder="例: 301"
-              required
             />
             {errors.value.roomNumber && <div class="error-text">{errors.value.roomNumber}</div>}
           </div>
@@ -178,8 +192,8 @@ export default defineComponent({
               type="text"
               class="form-control"
               placeholder="参加者をカンマ区切りで入力"
-              required
             />
+            {errors.value.attendees && <div class="error-text">{errors.value.attendees}</div>}
           </div>
           
           <div class="form-group">
@@ -191,13 +205,13 @@ export default defineComponent({
               rows="3"
               placeholder="会議の目的や内容を入力"
             ></textarea>
+            {errors.value.description && <div class="error-text">{errors.value.description}</div>}
           </div>
           
           <div class="button-group" style={{ marginTop: '20px' }}>
             <button
               type="submit"
               class="btn btn-primary"
-              disabled={props.isSubmitting || !isFormValid.value}
             >
               {props.isSubmitting ? '送信中...' : props.submitText}
             </button>
