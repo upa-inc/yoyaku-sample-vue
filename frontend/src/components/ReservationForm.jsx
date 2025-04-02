@@ -45,7 +45,33 @@ export default defineComponent({
       { id: '401', name: '401号室 (役員会議室)' },
     ]);
     
-    // URLパラメータから日時情報を読み取る
+    // 参加者管理用の変数
+    const newAttendee = ref('');
+    const attendeeList = ref([]);
+    
+    // 参加者候補リスト
+    const attendeeOptions = ref([
+      '山田 太郎',
+      '佐藤 花子',
+      '田中 一郎',
+      '鈴木 次郎',
+      '高橋 三郎',
+      '伊藤 四郎',
+      '渡辺 五郎',
+      '小林 恵子',
+      '加藤 美咲',
+      '吉田 直樹'
+    ]);
+    
+    // 候補リストにない参加者のフィルタリング用
+    const filteredAttendeeOptions = computed(() => {
+      return attendeeOptions.value.filter(
+        option => !attendeeList.value.includes(option) && 
+                 option.toLowerCase().includes(newAttendee.value.toLowerCase())
+      );
+    });
+    
+    // 初期データから参加者リストを設定
     onMounted(() => {
       // URLから日付情報を取得
       if (route.query.date) {
@@ -61,10 +87,44 @@ export default defineComponent({
         const endHour = (startHour + 1) % 24;
         form.value.endTime = `${endHour.toString().padStart(2, '0')}:00`;
       }
+      
+      // 初期の参加者リストを設定
+      if (props.initialData.attendees) {
+        attendeeList.value = props.initialData.attendees.split(',').map(item => item.trim()).filter(Boolean);
+      }
     });
     
+    // 参加者追加関数 - 手動で追加する場合用
+    const addAttendee = () => {
+      if (newAttendee.value.trim() && !attendeeList.value.includes(newAttendee.value.trim())) {
+        attendeeList.value.push(newAttendee.value.trim());
+        newAttendee.value = '';
+        updateAttendees();
+      }
+    };
+    
+    // 選択リストから参加者追加
+    const selectAttendee = (attendee) => {
+      if (!attendeeList.value.includes(attendee)) {
+        attendeeList.value.push(attendee);
+        newAttendee.value = '';
+        updateAttendees();
+      }
+    };
+    
+    // 参加者削除関数
+    const removeAttendee = (index) => {
+      attendeeList.value.splice(index, 1);
+      // 参加者リストを更新
+      updateAttendees();
+    };
+    
+    // フォームの attendees フィールドを更新
+    const updateAttendees = () => {
+      form.value.attendees = attendeeList.value.join(', ');
+    };
+    
     const validateForm = () => {
-
       console.log('test');
       const newErrors = {};
       
@@ -202,13 +262,51 @@ export default defineComponent({
           
           <div class="form-group">
             <label for="attendees">参加者</label>
-            <input
-              id="attendees"
-              v-model={form.value.attendees}
-              type="text"
-              class="form-control"
-              placeholder="参加者をカンマ区切りで入力"
-            />
+            <div class="attendees-input-container">
+              <div class="attendees-tags">
+                {attendeeList.value.map((attendee, index) => (
+                  <span class="attendee-tag" key={index}>
+                    {attendee}
+                    <button 
+                      type="button" 
+                      class="remove-tag" 
+                      onClick={() => removeAttendee(index)}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div class="attendee-dropdown-container">
+                <input
+                  id="newAttendee"
+                  v-model={newAttendee.value}
+                  type="text"
+                  class="form-control"
+                  placeholder="参加者を選択または入力"
+                  onKeyPress={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAttendee(); } }}
+                />
+                {newAttendee.value && (
+                  <div class="attendee-dropdown">
+                    {filteredAttendeeOptions.value.length > 0 ? (
+                      filteredAttendeeOptions.value.map((option, index) => (
+                        <div 
+                          key={index} 
+                          class="attendee-option"
+                          onClick={() => selectAttendee(option)}
+                        >
+                          {option}
+                        </div>
+                      ))
+                    ) : (
+                      <div class="attendee-option no-results" onClick={() => addAttendee()}>
+                        候補がありません。新しい名前として追加できます。
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
             {errors.value.attendees && <div class="error-text">{errors.value.attendees}</div>}
           </div>
           
