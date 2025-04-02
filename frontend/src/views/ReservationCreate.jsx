@@ -43,7 +43,7 @@ export default defineComponent({
         
         {success.value && (
           <div class="success-message card" style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#eeffee' }}>
-            {/* <p>予約が正常に作成されました。一覧ページに移動します...</p> */}
+            <p>予約が正常に作成されました。一覧ページに移動します...</p>
           </div>
         )}
         

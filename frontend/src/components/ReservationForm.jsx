@@ -86,12 +86,12 @@ export default defineComponent({
     const submitForm = () => {
       if (validateForm()) {
         emit('submit', { ...form.value });
-        router.push('/reservations');
+        router.push('/reservations/new');
       }
     };
     
     const cancelForm = () => {
-      router.push('/reservations');
+      router.push('/reservations/new');
     };
     
     const isFormValid = computed(() => {
