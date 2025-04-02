@@ -1,0 +1,13 @@
+{
+  "name": "yoyaku-calendar",
+  "version": "1.0.0",
+  "description": "会議予約システム",
+  "scripts": {
+    "start": "docker-compose up",
+    "build": "docker-compose build",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev"
+  },
+  "author": "",
+  "license": "ISC"
+} 

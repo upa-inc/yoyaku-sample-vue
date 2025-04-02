@@ -1,0 +1,133 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: '会議予約システムのバックエンドリソース'
+
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 128
+    Runtime: nodejs16.x
+    Environment:
+      Variables:
+        RESERVATIONS_TABLE: !Ref ReservationsTable
+
+Resources:
+  # API Gateway
+  ReservationsApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: "'GET, POST, PUT, DELETE, OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+      Auth:
+        DefaultAuthorizer: NONE
+
+  # DynamoDB テーブル
+  ReservationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Reservations
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  # Lambda 関数
+  # 予約一覧取得
+  GetAllReservationsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../backend/
+      Handler: lambda/getAllReservations.handler
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ReservationsTable
+      Events:
+        GetAllReservations:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ReservationsApi
+            Path: /reservations
+            Method: get
+
+  # 予約詳細取得
+  GetReservationByIdFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../backend/
+      Handler: lambda/getReservationById.handler
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ReservationsTable
+      Events:
+        GetReservationById:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ReservationsApi
+            Path: /reservations/{id}
+            Method: get
+
+  # 予約作成
+  CreateReservationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../backend/
+      Handler: lambda/createReservation.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ReservationsTable
+      Events:
+        CreateReservation:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ReservationsApi
+            Path: /reservations
+            Method: post
+
+  # 予約更新
+  UpdateReservationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../backend/
+      Handler: lambda/updateReservation.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ReservationsTable
+      Events:
+        UpdateReservation:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ReservationsApi
+            Path: /reservations/{id}
+            Method: put
+
+  # 予約削除
+  DeleteReservationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../backend/
+      Handler: lambda/deleteReservation.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ReservationsTable
+      Events:
+        DeleteReservation:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ReservationsApi
+            Path: /reservations/{id}
+            Method: delete
+
+Outputs:
+  ApiEndpoint:
+    Description: "API Gateway エンドポイント URL"
+    Value: !Sub "https://${ReservationsApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
+  
+  ReservationsTable:
+    Description: "DynamoDB 予約テーブル名"
+    Value: !Ref ReservationsTable 
