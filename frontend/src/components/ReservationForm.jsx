@@ -34,6 +34,17 @@ export default defineComponent({
     const form = ref({ ...props.initialData });
     const errors = ref({});
     
+    // 会議室の選択肢を定義
+    const roomOptions = ref([
+      { id: '101', name: '101号室 (小会議室)' },
+      { id: '102', name: '102号室 (小会議室)' },
+      { id: '201', name: '201号室 (中会議室)' },
+      { id: '202', name: '202号室 (中会議室)' },
+      { id: '301', name: '301号室 (大会議室)' },
+      { id: '302', name: '302号室 (大会議室)' },
+      { id: '401', name: '401号室 (役員会議室)' },
+    ]);
+    
     // URLパラメータから日時情報を読み取る
     onMounted(() => {
       // URLから日付情報を取得
@@ -174,13 +185,18 @@ export default defineComponent({
           
           <div class="form-group">
             <label for="roomNumber">会議室番号</label>
-            <input
+            <select
               id="roomNumber"
               v-model={form.value.roomNumber}
-              type="text"
               class="form-control"
-              placeholder="例: 301"
-            />
+            >
+              <option value="">会議室を選択してください</option>
+              {roomOptions.value.map(room => (
+                <option key={room.id} value={room.id}>
+                  {room.name}
+                </option>
+              ))}
+            </select>
             {errors.value.roomNumber && <div class="error-text">{errors.value.roomNumber}</div>}
           </div>
           
