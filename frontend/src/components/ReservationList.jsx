@@ -1,6 +1,7 @@
 import { defineComponent, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDate, isSameDay } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDate, isSameDay, 
+         startOfWeek, endOfWeek, addDays, parseISO, isWithinInterval } from 'date-fns';
 
 export default defineComponent({
   name: 'ReservationListComponent',
@@ -17,7 +18,8 @@ export default defineComponent({
   setup(props) {
     const router = useRouter();
     const currentMonth = ref(new Date());
-    const viewMode = ref('calendar'); // 'calendar' または 'list'
+    const currentWeek = ref(new Date());
+    const viewMode = ref('calendar'); // 'calendar', 'list', または 'timeline'
     
     const navigateToDetail = (id) => {
       router.push(`/reservations/${id}`);
@@ -61,7 +63,41 @@ export default defineComponent({
     };
     
     const toggleViewMode = () => {
-      viewMode.value = viewMode.value === 'calendar' ? 'list' : 'calendar';
+      if (viewMode.value === 'calendar') {
+        viewMode.value = 'timeline';
+      } else if (viewMode.value === 'timeline') {
+        viewMode.value = 'list';
+      } else {
+        viewMode.value = 'calendar';
+      }
+    };
+    
+    const previousWeek = () => {
+      const newDate = new Date(currentWeek.value);
+      newDate.setDate(newDate.getDate() - 7);
+      currentWeek.value = newDate;
+    };
+    
+    const nextWeek = () => {
+      const newDate = new Date(currentWeek.value);
+      newDate.setDate(newDate.getDate() + 7);
+      currentWeek.value = newDate;
+    };
+    
+    const getDaysInWeek = () => {
+      const start = startOfWeek(currentWeek.value, { weekStartsOn: 0 });
+      const end = endOfWeek(currentWeek.value, { weekStartsOn: 0 });
+      return eachDayOfInterval({ start, end });
+    };
+    
+    const getReservationsForTimeSlot = (day, hour) => {
+      return props.reservations.filter(reservation => {
+        const reservationDate = new Date(reservation.date);
+        if (!isSameDay(reservationDate, day)) return false;
+        
+        const startHour = parseInt(reservation.startTime.split(':')[0]);
+        return startHour === hour;
+      });
     };
     
     return () => (
@@ -75,7 +111,12 @@ export default defineComponent({
           <h2 class="page-title">予約一覧</h2>
           <div>
             <button class="btn btn-secondary" onClick={toggleViewMode} style={{ marginRight: '10px' }}>
-              {viewMode.value === 'calendar' ? 'リスト表示' : 'カレンダー表示'}
+              {viewMode.value === 'calendar' 
+                ? <><i class="fas fa-clock" style={{ marginRight: '5px' }}></i>タイムライン表示</>
+                : viewMode.value === 'timeline'
+                  ? <><i class="fas fa-list" style={{ marginRight: '5px' }}></i>リスト表示</>
+                  : <><i class="fas fa-calendar-alt" style={{ marginRight: '5px' }}></i>カレンダー表示</>
+              }
             </button>
             <button class="btn" onClick={navigateToCreate}>新規予約</button>
           </div>
@@ -156,6 +197,91 @@ export default defineComponent({
                   </div>
                 );
               })}
+            </div>
+          </div>
+        ) : viewMode.value === 'timeline' ? (
+          <div class="timeline-view">
+            <div class="timeline-navigation" style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: '15px' 
+            }}>
+              <button onClick={previousWeek} class="btn btn-sm">前週</button>
+              <h3>{format(startOfWeek(currentWeek.value), 'yyyy/MM/dd')} - {format(endOfWeek(currentWeek.value), 'yyyy/MM/dd')}</h3>
+              <button onClick={nextWeek} class="btn btn-sm">次週</button>
+            </div>
+            
+            <div class="timeline-grid" style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'auto repeat(7, 1fr)',
+              gap: '1px',
+              border: '1px solid #ddd'
+            }}>
+              {/* 時間帯の列 */}
+              <div style={{ backgroundColor: '#f5f5f5', gridRow: '1', gridColumn: '1' }}></div>
+              
+              {/* 曜日の行 */}
+              {getDaysInWeek().map((day, index) => (
+                <div style={{ 
+                  textAlign: 'center', 
+                  fontWeight: 'bold',
+                  padding: '10px',
+                  backgroundColor: '#f5f5f5',
+                  borderLeft: '1px solid #ddd'
+                }}>
+                  {format(day, 'E')}
+                  <div>{format(day, 'MM/dd')}</div>
+                </div>
+              ))}
+              
+              {/* 時間帯とイベント */}
+              {Array.from({ length: 12 }, (_, i) => i + 8).map(hour => (
+                <>
+                  <div style={{ 
+                    gridColumn: '1', 
+                    padding: '10px',
+                    backgroundColor: '#f5f5f5',
+                    borderTop: '1px solid #ddd',
+                    textAlign: 'center'
+                  }}>
+                    {`${hour}:00`}
+                  </div>
+                  
+                  {getDaysInWeek().map((day, dayIndex) => {
+                    const timeSlotReservations = getReservationsForTimeSlot(day, hour);
+                    return (
+                      <div style={{ 
+                        minHeight: '60px',
+                        borderTop: '1px solid #ddd',
+                        borderLeft: '1px solid #ddd',
+                        padding: '5px',
+                        backgroundColor: timeSlotReservations.length > 0 ? '#e6f7ff' : 'white'
+                      }}>
+                        {timeSlotReservations.map(reservation => (
+                          <div 
+                            onClick={() => navigateToDetail(reservation.id)}
+                            style={{ 
+                              backgroundColor: '#1890ff',
+                              color: 'white',
+                              padding: '3px 5px',
+                              borderRadius: '3px',
+                              marginBottom: '3px',
+                              fontSize: '0.8rem',
+                              cursor: 'pointer',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {reservation.title}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </>
+              ))}
             </div>
           </div>
         ) : (
