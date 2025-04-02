@@ -110,14 +110,46 @@ export default defineComponent({
         }}>
           <h2 class="page-title">予約一覧</h2>
           <div>
-            <button class="btn btn-secondary" onClick={toggleViewMode} style={{ marginRight: '10px' }}>
-              {viewMode.value === 'calendar' 
-                ? <><i class="fas fa-clock" style={{ marginRight: '5px' }}></i>タイムライン表示</>
-                : viewMode.value === 'timeline'
-                  ? <><i class="fas fa-list" style={{ marginRight: '5px' }}></i>リスト表示</>
-                  : <><i class="fas fa-calendar-alt" style={{ marginRight: '5px' }}></i>カレンダー表示</>
-              }
-            </button>
+            <div class="view-mode-buttons" style={{ 
+              display: 'inline-flex', 
+              marginRight: '10px', 
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              overflow: 'hidden'
+            }}>
+              <button 
+                onClick={() => viewMode.value = 'calendar'} 
+                class={`btn btn-sm ${viewMode.value === 'calendar' ? 'btn-primary' : 'btn-light'}`}
+                style={{ 
+                  borderRadius: '0', 
+                  borderRight: '1px solid #ddd',
+                  padding: '5px 10px'
+                }}
+              >
+                <i class="fas fa-calendar-alt" style={{ marginRight: '5px' }}></i>カレンダー
+              </button>
+              <button 
+                onClick={() => viewMode.value = 'timeline'} 
+                class={`btn btn-sm ${viewMode.value === 'timeline' ? 'btn-primary' : 'btn-light'}`}
+                style={{ 
+                  borderRadius: '0', 
+                  borderRight: '1px solid #ddd',
+                  padding: '5px 10px'
+                }}
+              >
+                <i class="fas fa-clock" style={{ marginRight: '5px' }}></i>タイムライン
+              </button>
+              <button 
+                onClick={() => viewMode.value = 'list'} 
+                class={`btn btn-sm ${viewMode.value === 'list' ? 'btn-primary' : 'btn-light'}`}
+                style={{ 
+                  borderRadius: '0',
+                  padding: '5px 10px'
+                }}
+              >
+                <i class="fas fa-list" style={{ marginRight: '5px' }}></i>リスト
+              </button>
+            </div>
             <button class="btn" onClick={navigateToCreate}>新規予約</button>
           </div>
         </div>
