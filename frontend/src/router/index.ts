@@ -1,9 +1,9 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
-import ReservationList from '../views/ReservationList';
-import ReservationCreate from '../views/ReservationCreate';
-import ReservationDetail from '../views/ReservationDetail';
-import ReservationEdit from '../views/ReservationEdit';
-import NotFound from '../views/NotFound';
+import ReservationList from '../views/ReservationList.vue';
+import ReservationCreate from '../views/ReservationCreate.vue';
+import ReservationDetail from '../views/ReservationDetail.vue';
+import ReservationEdit from '../views/ReservationEdit.vue';
+import NotFound from '../views/NotFound.vue';
 
 const routes: Array<RouteRecordRaw> = [
   {
